@@ -12,6 +12,8 @@ import {
 } from '@discordjs/voice';
 import { logger } from '../utils/logger';
 import { VoiceSynthesizer } from '../services/voice';
+import { VoiceRecognition } from '../services/voice-recognition';
+import { GeminiChat } from '../services/gemini';
 
 export const data = new SlashCommandBuilder()
     .setName('talk')
@@ -41,14 +43,20 @@ export async function execute(interaction: ChatInputCommandInteraction) {
             // 接続を購読
             connection.subscribe(player);
 
-            // 音声合成
+            // Geminiチャットの初期化（環境変数から取得）
+            const geminiChat = new GeminiChat(process.env.GEMINI_API_KEY || '');
+
+            // ボットの音声を再生
             const synthesizer = new VoiceSynthesizer();
             const audioResource = await synthesizer.synthesizeVoice('こんにちは！私はぴぴです');
-
-            // 音声を再生
             player.play(audioResource);
 
-            // 再生完了を待つ
+            // 音声認識を開始
+            const recognition = new VoiceRecognition(geminiChat);
+            connection.receiver.speaking.on('start', (userId) => {
+                recognition.startListening(connection, userId);
+            });
+
             player.on(AudioPlayerStatus.Idle, () => {
                 logger.info('Voice playback completed');
             });
