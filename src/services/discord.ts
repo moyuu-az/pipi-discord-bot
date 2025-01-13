@@ -27,8 +27,8 @@ async function deployCommands(applicationId: string, token: string) {
             Routes.applicationCommands(applicationId),
             { body: commands }
         );
-
-        logger.info(`Successfully registered ${commands.length} application commands`);
+        
+        logger.info(`Successfully registered ${commands.length} application commands: ${commands.map(c => c.name).join(', ')}`);
     } catch (error) {
         logger.error('Error occurred during command registration:', error);
         throw error;
