@@ -1,0 +1,73 @@
+# Dependencies
+node_modules/
+
+# Environment Variables
+.env
+.env.*
+!.env.example
+
+# Build Output
+build/
+dist/
+out/
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+
+# IDE and Editor Files
+.idea/
+.vscode/*
+!.vscode/extensions.json
+!.vscode/launch.json
+!.vscode/tasks.json
+*.code-workspace
+.settings/
+*.sublime-workspace
+*.sublime-project
+
+# TypeScript Specific
+*.tsbuildinfo
+.tscache/
+tsconfig.tsbuildinfo
+
+# Testing
+coverage/
+.nyc_output/
+junit.xml
+
+# Temporary Files
+.temp/
+.tmp/
+.cache/
+*.swp
+*.swo
+*~
+
+# OS Generated Files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Optional npm Cache Directory
+.npm
+
+# Optional eslint Cache
+.eslintcache
+
+# Optional REPL history
+.node_repl_history
+
+# Output of 'npm pack'
+*.tgz
+
+# Yarn Integrity File
+.yarn-integrity
