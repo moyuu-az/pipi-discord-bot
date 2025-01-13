@@ -10,6 +10,7 @@ import {
 import { GeminiChat } from './gemini';
 import { logger } from '../utils/logger';
 import * as joinTalkCommand from '../commands/talk';
+import * as leaveCommand from '../commands/leave';
 
 /**
  * Deploys slash commands to Discord
@@ -18,7 +19,11 @@ import * as joinTalkCommand from '../commands/talk';
  */
 async function deployCommands(applicationId: string, token: string) {
     try {
-        const commands = [joinTalkCommand.data.toJSON()];
+        const commands = [
+            joinTalkCommand.data.toJSON(),
+            leaveCommand.data.toJSON()
+        ];
+
         const rest = new REST().setToken(token);
 
         logger.info('Initiating slash command registration process');
@@ -27,7 +32,7 @@ async function deployCommands(applicationId: string, token: string) {
             Routes.applicationCommands(applicationId),
             { body: commands }
         );
-        
+
         logger.info(`Successfully registered ${commands.length} application commands: ${commands.map(c => c.name).join(', ')}`);
     } catch (error) {
         logger.error('Error occurred during command registration:', error);
@@ -54,6 +59,7 @@ export function setupDiscordBot(geminiChat: GeminiChat): Client {
     // Initialize commands collection
     client.commands = new Collection();
     client.commands.set(joinTalkCommand.data.name, joinTalkCommand);
+    client.commands.set(leaveCommand.data.name, leaveCommand);
 
     /**
      * Event handler for when the client is ready
