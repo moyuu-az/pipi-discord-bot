@@ -48,7 +48,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 
             // ボットの音声を再生
             const synthesizer = new VoiceSynthesizer();
-            const audioResource = await synthesizer.synthesizeVoice('こんにちは！私はぴぴです');
+            const audioResource = await synthesizer.synthesizeVoice('ヘルタだよ');
             player.play(audioResource);
 
             // 音声認識を開始
