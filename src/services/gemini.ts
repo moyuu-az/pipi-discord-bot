@@ -27,17 +27,18 @@ export class GeminiChat {
         try {
             logger.debug(`Generating response for user: ${username}`);
 
+            const promptText = `${BOT_CONFIG.SYSTEM_MESSAGE(username)}\n\nUser: ${text}`;
+
             const result = await this.model.generateContent({
                 contents: [{
-                    role: "user",
-                    parts: [{ text }],
+                    role: "ヘルタ",
+                    parts: [{ text: promptText }],
                 }],
                 generationConfig: {
                     temperature: BOT_CONFIG.TEMPERATURE,
                     maxOutputTokens: BOT_CONFIG.MAX_TOKENS,
                 },
                 safetySettings: [],
-                systemInstructions: BOT_CONFIG.SYSTEM_MESSAGE(username),
             });
 
             const response = result.response.text();
