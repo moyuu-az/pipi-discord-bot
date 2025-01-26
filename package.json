@@ -12,12 +12,14 @@
     "dev": "ts-node src/main.ts"
   },
   "dependencies": {
+    "@discordjs/opus": "^0.10.0",
     "@discordjs/voice": "^0.18.0",
     "@google-cloud/speech": "^6.7.0",
     "@google/generative-ai": "^0.21.0",
     "axios": "^1.6.7",
     "discord.js": "^14.17.3",
-    "dotenv": "^16.4.7"
+    "dotenv": "^16.4.7",
+    "wavefile": "^11.0.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.18.0",
