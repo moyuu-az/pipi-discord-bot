@@ -1,37 +1,37 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { BOT_CONFIG } from '../config/constants';
 import { logger } from '../utils/logger';
+import { ConversationHistory } from './conversation-history';
 
-/**
- * Handles communication with the Gemini AI API
- */
 export class GeminiChat {
     private genAI: GoogleGenerativeAI;
     private model: any;
+    private history: ConversationHistory;
 
     constructor(apiKey: string) {
         this.genAI = new GoogleGenerativeAI(apiKey);
         this.model = this.genAI.getGenerativeModel({
             model: BOT_CONFIG.MODEL_NAME,
         });
+        this.history = new ConversationHistory(10);
         logger.info('GeminiChat initialized successfully');
     }
 
-    /**
-     * Generate a response from Gemini AI
-     * @param text - User input text
-     * @param username - Discord username of the sender
-     * @returns Promise<string> - AI generated response
-     */
     async getResponse(text: string, username: string): Promise<string> {
         try {
             logger.debug(`Generating response for user: ${username}`);
 
-            const promptText = `${BOT_CONFIG.SYSTEM_MESSAGE(username)}\n\nUser: ${text}`;
+            // 会話履歴を取得して文脈を作成
+            const conversation = this.history.getConversation(username);
+            const context = conversation.map(msg =>
+                `${msg.role === 'user' ? 'User' : 'Assistant'}: ${msg.content}`
+            ).join('\n');
+
+            const promptText = `${BOT_CONFIG.SYSTEM_MESSAGE(username)}\n\n${context}\n\nUser: ${text}`;
 
             const result = await this.model.generateContent({
                 contents: [{
-                    role: "user",  // ここを"user"に修正！
+                    role: "user",
                     parts: [{ text: promptText }],
                 }],
                 generationConfig: {
@@ -42,6 +42,11 @@ export class GeminiChat {
             });
 
             const response = result.response.text();
+
+            // 会話履歴に追加
+            this.history.addMessage(username, 'user', text);
+            this.history.addMessage(username, 'assistant', response);
+
             logger.debug(`Generated response: ${response}`);
             return response;
 
@@ -49,5 +54,10 @@ export class GeminiChat {
             logger.error('Error generating response:', error);
             throw error;
         }
+    }
+
+    clearConversation(username: string): void {
+        this.history.clearConversation(username);
+        logger.info(`Cleared conversation history for user: ${username}`);
     }
 }
