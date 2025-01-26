@@ -26,37 +26,43 @@ export async function execute(interaction: ChatInputCommandInteraction) {
         if (channel?.type === ChannelType.GuildVoice) {
             const voiceChannel = channel as VoiceChannel;
 
-            // ボイスチャンネルに接続
+            // ボイスチャンネルに接続するよ〜！🎤
             const connection = joinVoiceChannel({
                 channelId: voiceChannel.id,
                 guildId: voiceChannel.guild.id,
                 adapterCreator: voiceChannel.guild.voiceAdapterCreator,
+                selfDeaf: false  // 自分の声も聞こえるようにしておく！
             });
 
-            // プレイヤーの設定
+            // プレイヤーの設定もバッチリ！🎵
             const player = createAudioPlayer({
                 behaviors: {
                     noSubscriber: NoSubscriberBehavior.Pause,
                 },
             });
 
-            // 接続を購読
+            // 接続を購読！📡
             connection.subscribe(player);
 
-            // Geminiチャットの初期化（環境変数から取得）
+            // Geminiちゃんの初期化！🤖✨
             const geminiChat = new GeminiChat(process.env.GEMINI_API_KEY || '');
 
-            // ボットの音声を再生
+            // 最初の挨拶を準備！💖
             const synthesizer = new VoiceSynthesizer();
-            const audioResource = await synthesizer.synthesizeVoice('ヘルタだよ');
-            player.play(audioResource);
+            try {
+                const audioResource = await synthesizer.synthesizeVoice('ヘルタだよ！よろしくね！');
+                player.play(audioResource);
+            } catch (error) {
+                logger.error('Error playing initial voice:', error);
+            }
 
-            // 音声認識を開始
-            const recognition = new VoiceRecognition(geminiChat);
+            // 音声認識の準備だよ〜！🎧
+            const recognition = new VoiceRecognition(geminiChat, interaction.client);
             connection.receiver.speaking.on('start', (userId) => {
                 recognition.startListening(connection, userId);
             });
 
+            // プレイヤーのイベントもしっかり監視！👀
             player.on(AudioPlayerStatus.Idle, () => {
                 logger.info('Voice playback completed');
             });

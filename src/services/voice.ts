@@ -1,6 +1,6 @@
 import axios from 'axios';
 import { Readable } from 'stream';
-import { createAudioResource } from '@discordjs/voice';
+import { createAudioResource, StreamType } from '@discordjs/voice';
 import { logger } from '../utils/logger';
 
 interface VoiceConfig {
@@ -36,6 +36,8 @@ export class VoiceSynthesizer {
 
     async synthesizeVoice(text: string) {
         try {
+            logger.info('Starting voice synthesis for text:', text);
+
             const response = await axios.post(
                 `${this.baseUrl}/voice`,
                 null,
@@ -53,20 +55,31 @@ export class VoiceSynthesizer {
                 }
             );
 
-            logger.info('Voice synthesis successful');
+            logger.info('Voice synthesis API call successful');
 
-            // ArrayBuffer から AudioResource を作成
+            // ArrayBufferからStreamを作成
             const buffer = Buffer.from(response.data);
-            const bufferStream = new Readable();
-            bufferStream.push(buffer);
-            bufferStream.push(null);
+            const stream = new Readable();
+            stream.push(buffer);
+            stream.push(null);
 
-            const audioResource = createAudioResource(bufferStream);
+            // AudioResourceを作成（StreamTypeを明示的に指定）
+            const audioResource = createAudioResource(stream, {
+                inputType: StreamType.Arbitrary,
+                inlineVolume: true
+            });
+
+            // ボリュームの調整（必要に応じて）
+            if (audioResource.volume) {
+                audioResource.volume.setVolume(1.0);
+            }
+
+            logger.info('Audio resource created successfully');
             return audioResource;
 
         } catch (error) {
             logger.error('Voice synthesis failed:', error);
-            throw error;
+            throw new Error('音声合成に失敗しました');
         }
     }
 }

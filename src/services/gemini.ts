@@ -31,7 +31,7 @@ export class GeminiChat {
 
             const result = await this.model.generateContent({
                 contents: [{
-                    role: "ヘルタ",
+                    role: "user",  // ここを"user"に修正！
                     parts: [{ text: promptText }],
                 }],
                 generationConfig: {
