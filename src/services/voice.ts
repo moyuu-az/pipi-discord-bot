@@ -4,7 +4,7 @@ import { createAudioResource, StreamType } from '@discordjs/voice';
 import { logger } from '../utils/logger';
 
 interface VoiceConfig {
-    model_id: number;
+    model_name: string;
     speaker_id: number;
     sdp_ratio: number;
     noise: number;
@@ -22,15 +22,15 @@ export class VoiceSynthesizer {
     constructor(baseUrl: string = 'http://192.168.1.50:5000') {
         this.baseUrl = baseUrl;
         this.config = {
-            model_id: 0,
+            model_name: "Anneli",
             speaker_id: 0,
             sdp_ratio: 0.2,
             noise: 0.6,
             noisew: 0.8,
             length: 1.0,
             language: "JP",
-            style: "02",
-            style_weight: 1
+            style: "落ち着き",
+            style_weight: 10
         };
     }
 
