@@ -1,1 +1,1 @@
-## ぴぴちゃんぼっと
+## discord AI bot
