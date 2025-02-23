@@ -21,7 +21,8 @@ export const data = new SlashCommandBuilder()
 
 export async function execute(interaction: ChatInputCommandInteraction) {
     try {
-        const channel = await interaction.client.channels.fetch('1328319783489376303');
+        // const channel = await interaction.client.channels.fetch('1328319783489376303');
+        const channel = await interaction.client.channels.fetch('1337364924589936640');
 
         if (channel?.type === ChannelType.GuildVoice) {
             const voiceChannel = channel as VoiceChannel;
@@ -50,7 +51,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
             // 最初の挨拶を準備！💖
             const synthesizer = new VoiceSynthesizer();
             try {
-                const audioResource = await synthesizer.synthesizeVoice('ヘルタだよ！よろしくね！');
+                const audioResource = await synthesizer.synthesizeVoice('えーあいだよ！よろしくね！');
                 player.play(audioResource);
             } catch (error) {
                 logger.error('Error playing initial voice:', error);

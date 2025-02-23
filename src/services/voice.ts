@@ -3,6 +3,7 @@ import { Readable } from 'stream';
 import { createAudioResource, StreamType } from '@discordjs/voice';
 import { logger } from '../utils/logger';
 
+// https://note.com/sirodon_256/n/n40b2b1bd5aca
 interface VoiceConfig {
     model_name: string;
     speaker_id: number;
@@ -27,7 +28,7 @@ export class VoiceSynthesizer {
             sdp_ratio: 0.2,
             noise: 0.6,
             noisew: 0.8,
-            length: 1.0,
+            length: 0.92,
             language: "JP",
             style: "落ち着き",
             style_weight: 10

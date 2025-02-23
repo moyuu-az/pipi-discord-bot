@@ -1,4 +1,4 @@
-import { VoiceConnection, EndBehaviorType, createAudioPlayer, NoSubscriberBehavior, getVoiceConnection } from '@discordjs/voice';
+import { VoiceConnection, EndBehaviorType, createAudioPlayer, NoSubscriberBehavior, getVoiceConnection, AudioPlayerStatus } from '@discordjs/voice';
 import { SpeechClient, protos } from '@google-cloud/speech';
 import { logger } from '../utils/logger';
 import { GeminiChat } from './gemini';
@@ -11,6 +11,10 @@ export class VoiceRecognition {
     private speechClient: SpeechClient;
     private opusEncoder: OpusEncoder;
     private discordClient: Client;
+    private isProcessing: boolean = false;
+    private audioPlayer: any = null;
+    private skipCount: number = 0;
+    private readonly MAX_SKIP_COUNT = 10;
 
     constructor(geminiChat: GeminiChat, discordClient: Client) {
         this.geminiChat = geminiChat;
@@ -20,6 +24,19 @@ export class VoiceRecognition {
     }
 
     async startListening(connection: VoiceConnection, userId: string) {
+        if (this.isProcessing) {
+            this.skipCount++;
+            logger.info('Currently processing, skipping new voice input');
+
+            if (this.skipCount >= this.MAX_SKIP_COUNT) {
+                logger.warn(`Max skip count reached (${this.MAX_SKIP_COUNT}), forcing reset...`);
+                this.isProcessing = false;
+                this.skipCount = 0;
+                return;
+            }
+            return;
+        }
+
         try {
             const pcmChunks: Buffer[] = [];
 
@@ -31,6 +48,7 @@ export class VoiceRecognition {
             });
 
             logger.info(`Started listening to user: ${userId}`);
+            this.isProcessing = true;
 
             subscription.on('data', (data: Buffer) => {
                 if (!(data.length === 3 && data[0] === 0xf8)) {
@@ -47,6 +65,7 @@ export class VoiceRecognition {
                 try {
                     if (pcmChunks.length === 0) {
                         logger.info('No audio data received');
+                        this.isProcessing = false;
                         return;
                     }
 
@@ -62,14 +81,15 @@ export class VoiceRecognition {
                     } catch (error) {
                         logger.error('Error processing audio data:', error);
                     }
-
                 } catch (error) {
                     logger.error('Error finalizing audio stream:', error);
+                    this.isProcessing = false;
                 }
             });
 
         } catch (error) {
             logger.error('Error in voice recognition:', error);
+            this.isProcessing = false;
             throw error;
         }
     }
@@ -130,41 +150,42 @@ export class VoiceRecognition {
                 logger.info(`Transcription: ${transcription}`);
 
                 if (transcription) {
-                    // ユーザー名を取得
                     const user = await this.discordClient.users.fetch(userId);
                     const username = user.username;
-                    logger.info(`Processing response for user: ${username}`);
-
-                    // AIの返答を取得（実際のユーザー名を使用）
                     const reply = await this.geminiChat.getResponse(transcription, username);
-                    logger.info(`AI Response: ${reply}`);
 
                     const synthesizer = new VoiceSynthesizer();
                     const audioResource = await synthesizer.synthesizeVoice(reply);
 
+                    // プレイヤーの設定を更新
                     const player = createAudioPlayer({
                         behaviors: {
                             noSubscriber: NoSubscriberBehavior.Pause,
                         },
                     });
 
+                    this.audioPlayer = player;
                     connection.subscribe(player);
                     player.play(audioResource);
 
-                    player.on('stateChange', (oldState, newState) => {
-                        logger.info(`Audio player state changed from ${oldState.status} to ${newState.status}`);
+                    // 発話状態の監視を追加
+                    player.on(AudioPlayerStatus.Idle, () => {
+                        logger.info('Audio playback completed');
+                        this.isProcessing = false; // 発話終了をマーク
                     });
 
                     player.on('error', error => {
                         logger.error('Error in audio playback:', error);
+                        this.isProcessing = false; // エラー時も発話終了をマーク
                     });
                 }
             } else {
                 logger.info('No transcription results received');
+                this.isProcessing = false;
             }
-
         } catch (error) {
             logger.error('Error in Speech-to-Text processing:', error);
+            this.isProcessing = false; // エラー時も発話終了をマーク
             throw error;
         }
     }
