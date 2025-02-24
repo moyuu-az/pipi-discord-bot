@@ -152,12 +152,25 @@ export class VoiceRecognition {
                 if (transcription) {
                     const user = await this.discordClient.users.fetch(userId);
                     const username = user.username;
+
+                    // 新しいチャンネルIDを使用
+                    const channel = await this.discordClient.channels.fetch('1343057152285343825');
+                    if (channel?.isTextBased() && 'send' in channel) {
+                        await channel.send('───────────────────');
+                        await channel.send(`💬 質問:\n${transcription}`);
+                    }
+
                     const reply = await this.geminiChat.getResponse(transcription, username);
 
                     const synthesizer = new VoiceSynthesizer();
                     const audioResource = await synthesizer.synthesizeVoice(reply);
 
-                    // プレイヤーの設定を更新
+                    // ボットの応答もチャットに送信
+                    if (channel?.isTextBased() && 'send' in channel) {
+                        await channel.send(`🤖 さとうの返答:\n${reply}`);
+                        await channel.send('───────────────────');
+                    }
+
                     const player = createAudioPlayer({
                         behaviors: {
                             noSubscriber: NoSubscriberBehavior.Pause,
@@ -168,15 +181,14 @@ export class VoiceRecognition {
                     connection.subscribe(player);
                     player.play(audioResource);
 
-                    // 発話状態の監視を追加
                     player.on(AudioPlayerStatus.Idle, () => {
                         logger.info('Audio playback completed');
-                        this.isProcessing = false; // 発話終了をマーク
+                        this.isProcessing = false;
                     });
 
                     player.on('error', error => {
                         logger.error('Error in audio playback:', error);
-                        this.isProcessing = false; // エラー時も発話終了をマーク
+                        this.isProcessing = false;
                     });
                 }
             } else {
@@ -185,7 +197,7 @@ export class VoiceRecognition {
             }
         } catch (error) {
             logger.error('Error in Speech-to-Text processing:', error);
-            this.isProcessing = false; // エラー時も発話終了をマーク
+            this.isProcessing = false;
             throw error;
         }
     }

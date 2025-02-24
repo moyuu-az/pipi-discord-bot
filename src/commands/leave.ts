@@ -11,29 +11,27 @@ export const data = new SlashCommandBuilder()
 
 export async function execute(interaction: ChatInputCommandInteraction) {
     try {
-        // ギルドIDを取得
+        // インタラクションを確認するだけで、メッセージは送信しない
+        await interaction.deferReply({ ephemeral: true });
+        await interaction.deleteReply();
+
         const guildId = interaction.guildId;
         if (!guildId) {
-            await interaction.reply('ギルドでしか使えないコマンドだよ〜！😅');
+            logger.warn('Command used outside of guild');
             return;
         }
 
-        // 現在のボイス接続を取得
         const connection = getVoiceConnection(guildId);
 
         if (!connection) {
-            await interaction.reply('今はボイスチャンネルに入ってないよ〜！🤔');
+            logger.warn('No voice connection found');
             return;
         }
 
-        // ボイスチャンネルから切断
         connection.destroy();
-
-        await interaction.reply('バイバイ！また来るね〜！👋✨');
         logger.info(`Left voice channel in guild: ${guildId}`);
 
     } catch (error) {
         logger.error('Error leaving voice channel:', error);
-        await interaction.reply('ごめんね！退出できなかったよ...😢');
     }
 }

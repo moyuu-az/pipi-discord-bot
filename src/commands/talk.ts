@@ -8,7 +8,8 @@ import {
     joinVoiceChannel,
     createAudioPlayer,
     NoSubscriberBehavior,
-    AudioPlayerStatus
+    AudioPlayerStatus,
+    getVoiceConnection
 } from '@discordjs/voice';
 import { logger } from '../utils/logger';
 import { VoiceSynthesizer } from '../services/voice';
@@ -21,8 +22,11 @@ export const data = new SlashCommandBuilder()
 
 export async function execute(interaction: ChatInputCommandInteraction) {
     try {
-        // const channel = await interaction.client.channels.fetch('1328319783489376303');
-        const channel = await interaction.client.channels.fetch('1337364924589936640');
+        // インタラクションを確認するだけで、メッセージは送信しない
+        await interaction.deferReply({ ephemeral: true });
+        await interaction.deleteReply();
+
+        const channel = await interaction.client.channels.fetch('1343049308508913759');
 
         if (channel?.type === ChannelType.GuildVoice) {
             const voiceChannel = channel as VoiceChannel;
@@ -51,7 +55,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
             // 最初の挨拶を準備！💖
             const synthesizer = new VoiceSynthesizer();
             try {
-                const audioResource = await synthesizer.synthesizeVoice('えーあいだよ！よろしくね！');
+                const audioResource = await synthesizer.synthesizeVoice('さとうです！よろしくね！');
                 player.play(audioResource);
             } catch (error) {
                 logger.error('Error playing initial voice:', error);
@@ -72,11 +76,11 @@ export async function execute(interaction: ChatInputCommandInteraction) {
                 logger.error('Error playing audio:', error);
             });
 
-            await interaction.reply('はーい！ボイスチャットに参加したよ〜！🎤✨');
+            // ボイスチャンネルに接続
+            connection.subscribe(player);
             logger.info(`Joined voice channel: ${voiceChannel.name}`);
         }
     } catch (error) {
-        logger.error('Error joining voice channel:', error);
-        await interaction.reply('ごめんね！ボイスチャットに参加できなかったよ...😢');
+        logger.error('Error in talk command:', error);
     }
 }
